@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=0">
+  <title>Dobro došli u Kladanj</title>
+  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    a-scene {
+      width: 70%;
+      height: 70vh;
+    }
+  </style>
+</head>
+<body>
+
+<audio id="audio-bosnian" preload="auto">
+  <source src="https://cdn.glitch.global/f500b50e-7622-4323-b0ff-d5849eed5e0e/luvvoice.com-20250422-JBIeIX.mp3?v=1745357073711" type="audio/mpeg">
+</audio>
+<audio id="audio-english" preload="auto">
+  <source src="https://cdn.glitch.global/f500b50e-7622-4323-b0ff-d5849eed5e0e/luvvoice.com-20250422-fvlhkL.mp3?v=1745357082438" type="audio/mpeg">
+</audio>
+
+<a-scene embedded arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;">
+  <a-assets>
+    <a-asset-item id="model" src="https://cdn.glitch.global/d3488c45-0ac5-41f9-ab49-e0c459fcd66f/greeting_waving_110_frames_loop.glb?v=1741639412806"></a-asset-item>
+    <a-asset-item id="font" src="https://cdn.aframe.io/fonts/mozillavr.fnt"></a-asset-item>
+  </a-assets>
+
+  <a-sky color="#1A237E" material="shader: gradient; topColor: 26 35 126; bottomColor: 100 181 246"></a-sky>
+  <a-plane color="#008000" height="3.5" width="6.5" position="0 0.5 -5" opacity="0.9"></a-plane>
+  <a-entity id="animatedModel" gltf-model="#model" position="0 -0.1 -4" scale="1 1 1" rotation="0 0 0" custom-animation></a-entity>
+
+  <a-light id="flash-light" type="point" intensity="0" color="white" position="0 3 -3"></a-light>
+  <a-light type="ambient" intensity="0.6" color="#FFF"></a-light>
+
+  <a-text value="DOBRODOSLI            U KLADANJ!" position="0 0.4 -4.8" align="center" color="white" width="5" font="mozillavr" shader="msdf" negate="false"></a-text>
+ <a-text value=" UZIVAJTE U                  CARIMA KLADANJA!" position="0.5 0.1 -4.8" align="center" color="white" width="5" font="mozillavr" shader="msdf" negate="false"></a-text>
+
+  <a-entity id="particles-container"></a-entity>
+  <a-entity id="flying-birds"></a-entity>
+  <a-entity id="floating-clouds"></a-entity>
+
+  <a-entity id="eng-button"
+            geometry="primitive: plane; height: 0.3; width: 1.5"
+            material="shader: standard; color: #1E90FF; metalness: 0.5; roughness: 0.2"
+            position="0 2 -4.9"
+            text="value: ENG; color: white; align: center; width: 3;"
+            cursor="rayOrigin: mouse"
+            event-set__click="_event: click; _target: #audio-english; _type: play"
+            animation="property: rotation; to: 0 360 0; dur: 10000; loop: true; easing: linear"
+            animation__click="property: material.color; to: #87CEEB; dur: 200; startEvents: click; dir: alternate; loop: 2">
+    <a-entity id="click-particles" visible="false"></a-entity>
+  </a-entity>
+
+  <a-camera position="0 1.6 0">
+    <a-cursor color="#FF0000" radius="0.05" position="0 0 -1"></a-cursor>
+  </a-camera>
+</a-scene>
+
+<script>
+AFRAME.registerComponent('custom-animation', {
+  init: function () {
+    let el = this.el;
+    let mixer, clock = new THREE.Clock();
+    el.addEventListener('model-loaded', (e) => {
+      let model = e.detail.model;
+      if (model.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(model);
+        let clip = mixer.clipAction(model.animations[0]);
+        clip.play();
+        this.mixer = mixer;
+        this.clock = clock;
+      } else {
+        console.warn("No animations found in the model!");
+      }
+    });
+  },
+  tick: function () {
+    if (this.mixer) {
+      this.mixer.update(this.clock.getDelta());
+    }
+  }
+});
+
+AFRAME.registerComponent('sparkle-particles', {
+  init: function () {
+    let scene = document.querySelector('#particles-container');
+    for (let i = 0; i < 25; i++) {
+      let particle = document.createElement('a-sphere');
+      particle.setAttribute('radius', Math.random() * 0.04 + 0.02);
+      particle.setAttribute('material', `color: ${['#FFD700', '#87CEEB', '#FFFFFF'][Math.floor(Math.random() * 3)]}; opacity: ${Math.random() * 0.4 + 0.6}`);
+      particle.setAttribute('position', `${(Math.random() - 0.5) * 12} ${Math.random() * 5 + 1} -5`);
+      scene.appendChild(particle);
+      this.animateParticle(particle);
+    }
+  },
+  animateParticle: function (particle) {
+    function sparkle() {
+      let startY = Math.random() * 5 + 1;
+      let duration = Math.random() * 3000 + 1500;
+      particle.setAttribute('position', `${(Math.random() - 0.5) * 12} ${startY} -5`);
+      particle.setAttribute('animation', {
+        property: 'position',
+        to: `${(Math.random() - 0.5) * 12} ${startY - 3} -5`,
+        dur: duration,
+        easing: 'easeOutQuad',
+        loop: false
+      });
+      particle.setAttribute('animation__fade', {
+        property: 'material.opacity',
+        to: Math.random() * 0.2,
+        dur: duration,
+        easing: 'linear',
+        loop: false
+      });
+      setTimeout(() => sparkle(), duration);
+    }
+    sparkle();
+  }
+});
+
+AFRAME.registerComponent('flying-birds', {
+  init: function () {
+    let scene = document.querySelector('#flying-birds');
+    for (let i = 0; i < 5; i++) {
+      let bird = document.createElement('a-entity');
+      bird.setAttribute('geometry', 'primitive: triangle; vertexA: 0 0 0; vertexB: 0.1 0 0; vertexC: 0.05 0.1 0');
+      bird.setAttribute('material', 'color: #FFFFFF; opacity: 0.8');
+      bird.setAttribute('position', `${(Math.random() - 0.5) * 10} ${Math.random() * 3 + 2} -6`);
+      scene.appendChild(bird);
+      this.animateBird(bird);
+    }
+  },
+  animateBird: function (bird) {
+    function fly() {
+      let duration = Math.random() * 6000 + 4000;
+      bird.setAttribute('animation', {
+        property: 'position',
+        to: `${(Math.random() - 0.5) * 10} ${Math.random() * 3 + 2} -6`,
+        dur: duration,
+        easing: 'easeInOutSine',
+        loop: false
+      });
+      bird.setAttribute('animation__flap', {
+        property: 'rotation',
+        to: `0 0 ${Math.random() * 30 - 15}`,
+        dur: 500,
+        easing: 'easeInOutQuad',
+        loop: true,
+        dir: 'alternate'
+      });
+      setTimeout(() => fly(), duration);
+    }
+    fly();
+  }
+});
+
+AFRAME.registerComponent('floating-clouds', {
+  init: function () {
+    let scene = document.querySelector('#floating-clouds');
+    for (let i = 0; i < 3; i++) {
+      let cloud = document.createElement('a-sphere');
+      cloud.setAttribute('radius', Math.random() * 0.5 + 0.5);
+      cloud.setAttribute('material', 'color: #FFFFFF; opacity: 0.3');
+      cloud.setAttribute('position', `${(Math.random() - 0.5) * 8} ${Math.random() * 2 + 3} -7`);
+      scene.appendChild(cloud);
+      this.animateCloud(cloud);
+    }
+  },
+  animateCloud: function (cloud) {
+    function float() {
+      let duration = Math.random() * 10000 + 8000;
+      cloud.setAttribute('animation', {
+        property: 'position',
+        to: `${(Math.random() - 0.5) * 8} ${Math.random() * 2 + 3} -7`,
+        dur: duration,
+        easing: 'easeInOutSine',
+        loop: false
+      });
+      setTimeout(() => float(), duration);
+    }
+    float();
+  }
+});
+
+AFRAME.registerComponent('click-particles', {
+  init: function () {
+    this.el.addEventListener('click', () => {
+      this.el.setAttribute('visible', 'true');
+      let scene = this.el;
+      scene.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        let particle = document.createElement('a-sphere');
+        particle.setAttribute('radius', '0.02');
+        particle.setAttribute('material', 'color: #FFFFFF; opacity: 0.8');
+        particle.setAttribute('position', `${(Math.random() - 0.5) * 0.5} ${(Math.random() - 0.5) * 0.5} 0.01`);
+        scene.appendChild(particle);
+        this.animateParticle(particle);
+      }
+      setTimeout(() => {
+        scene.innerHTML = '';
+        this.el.setAttribute('visible', 'false');
+      }, 1000);
+    });
+  },
+  animateParticle: function (particle) {
+    let duration = 800;
+    particle.setAttribute('animation', {
+      property: 'position',
+      to: `${(Math.random() - 0.5) * 1} ${(Math.random() - 0.5) * 1} 0.01`,
+      dur: duration,
+      easing: 'easeOutQuad'
+    });
+    particle.setAttribute('animation__fade', {
+      property: 'material.opacity',
+      to: 0,
+      dur: duration,
+      easing: 'linear'
+    });
+  }
+});
+
+document.querySelector('#particles-container').setAttribute('sparkle-particles', '');
+document.querySelector('#flying-birds').setAttribute('flying-birds', '');
+document.querySelector('#floating-clouds').setAttribute('floating-clouds', '');
+document.querySelector('#eng-button').querySelector('#click-particles').setAttribute('click-particles', '');
+
+function flashEffect() {
+  let light = document.querySelector('#flash-light');
+  let intensity = Math.random() * 1.5;
+  light.setAttribute('intensity', intensity);
+  setTimeout(() => {
+    light.setAttribute('intensity', '0');
+    setTimeout(flashEffect, Math.random() * 600 + 300);
+  }, 100);
+}
+flashEffect();
+
+let bosnianAudio = document.getElementById('audio-bosnian');
+let englishAudio = document.getElementById('audio-english');
+let isAudioPlaying = false;
+
+function stopAllAudio() {
+  [bosnianAudio, englishAudio].forEach(audio => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+  isAudioPlaying = false;
+}
+
+function playAudio(audioElement) {
+  stopAllAudio();
+  audioElement.play().catch(error => {
+    console.warn('Reprodukcija nije uspjela: ', error);
+  });
+  isAudioPlaying = true;
+}
+
+document.getElementById('eng-button').addEventListener('click', () => {
+  playAudio(englishAudio);
+});
+
+window.addEventListener('load', () => {
+  bosnianAudio.play().catch(error => {
+    console.warn('Automatska reprodukcija nije dozvoljena: ', error);
+    document.body.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'A-ENTITY' && !isAudioPlaying) {
+        playAudio(bosnianAudio);
+      }
+    }, { once: true });
+  });
+});
+
+[bosnianAudio, englishAudio].forEach(audio => {
+  audio.addEventListener('play', () => {
+    isAudioPlaying = true;
+  });
+  audio.addEventListener('ended', () => {
+    isAudioPlaying = false;
+  });
+});
+</script>
+</body>
+</html>
