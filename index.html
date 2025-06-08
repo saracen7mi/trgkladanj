@@ -20,10 +20,10 @@
 <body>
 
 <audio id="audio-bosnian" preload="auto">
-  <source src="https://raw.githubusercontent.com/saracen7mi/trgkladanj/main/trgkladanjbosanski.mp3" type="audio/mpeg">
+  <source src="https://cdn.jsdelivr.net/gh/saracen7mi/trgkladanj@main/trgkladanjbosanski.mp3" type="audio/mpeg">
 </audio>
 <audio id="audio-english" preload="auto">
-  <source src="https://raw.githubusercontent.com/saracen7mi/trgkladanj/main/trgkladanjengleski.mp3" type="audio/mpeg">
+  <source src="https://cdn.jsdelivr.net/gh/saracen7mi/trgkladanj@main/trgkladanjengleski.mp3" type="audio/mpeg">
 </audio>
 
 <a-scene embedded arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;">
@@ -40,7 +40,7 @@
   <a-light type="ambient" intensity="0.6" color="#FFF"></a-light>
 
   <a-text value="DOBRODOSLI            U KLADANJ!" position="0 0.4 -4.8" align="center" color="white" width="5" font="mozillavr" shader="msdf" negate="false"></a-text>
- <a-text value=" UZIVAJTE U                  CARIMA KLADANJA!" position="0.5 0.1 -4.8" align="center" color="white" width="5" font="mozillavr" shader="msdf" negate="false"></a-text>
+  <a-text value=" UZIVAJTE U                  CARIMA KLADANJA!" position="0.5 0.1 -4.8" align="center" color="white" width="5" font="mozillavr" shader="msdf" negate="false"></a-text>
 
   <a-entity id="particles-container"></a-entity>
   <a-entity id="flying-birds"></a-entity>
@@ -262,19 +262,31 @@ function playAudio(audioElement) {
   isAudioPlaying = true;
 }
 
-document.getElementById('eng-button').addEventListener('click', () => {
-  playAudio(englishAudio);
+// Provjera učitavanja audio fajlova
+bosnianAudio.addEventListener('canplaythrough', () => {
+  console.log('Bosanski audio spreman za reprodukciju');
+});
+englishAudio.addEventListener('canplaythrough', () => {
+  console.log('Engleski audio spreman za reprodukciju');
 });
 
+// Pokretanje bosanskog audia na učitavanje stranice
 window.addEventListener('load', () => {
   bosnianAudio.play().catch(error => {
     console.warn('Automatska reprodukcija nije dozvoljena: ', error);
+    // Pokretanje na prvi klik izvan eng-button
     document.body.addEventListener('click', (e) => {
-      if (e.target.tagName !== 'A-ENTITY' && !isAudioPlaying) {
+      const isEngButtonClick = e.target.closest('#eng-button');
+      if (!isEngButtonClick && !isAudioPlaying) {
         playAudio(bosnianAudio);
       }
     }, { once: true });
   });
+});
+
+// Engleski audio na klik dugmeta
+document.getElementById('eng-button').addEventListener('click', () => {
+  playAudio(englishAudio);
 });
 
 [bosnianAudio, englishAudio].forEach(audio => {
